@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Servis takip ve yönetim sistemi" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="STS Servis" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- Android Chrome specific -->
+    <meta name="format-detection" content="telephone=no" />
+    
+    <!-- Force dark theme -->
+    <meta name="color-scheme" content="dark" />
+    <meta name="supported-color-schemes" content="dark" />
+    
+    <!-- Full-screen PWA support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    
+    <!-- Explicit theme color for PWA -->
+    <meta name="theme-color" content="#2f3d4b" />
+    <meta name="msapplication-navbutton-color" content="#2f3d4b" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json?v=1.0.11" />
+    
+    <title>STS Servis Takip</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then((registration) => {
+              console.log('✅ SW registered: ', registration);
+              
+              // Güncelleme kontrolü
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // Yeni sürüm mevcut
+                    if (confirm('Yeni sürüm mevcut! Uygulamayı yenilemek ister misiniz?')) {
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      window.location.reload();
+                    }
+                  }
+                });
+              });
+            })
+            .catch((registrationError) => {
+              console.log('❌ SW registration failed: ', registrationError);
+            });
+        });
+        
+        // Service Worker güncellendiğinde sayfayı yenile
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
+        });
+      }
+      
+      // PWA Install Prompt
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('💾 PWA install prompt available');
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Install butonunu göster (isteğe bağlı)
+        // showInstallButton();
+      });
+      
+      // PWA yüklendiğinde
+      window.addEventListener('appinstalled', (evt) => {
+        console.log('🎉 PWA was installed');
+        // Analytics veya kullanıcı bildirimi
+      });
+      
+      // Çevrimdışı/çevrimiçi durumu
+      window.addEventListener('online', () => {
+        console.log('🌐 App is online');
+        // Çevrimiçi durumu UI'da göster
+      });
+      
+      window.addEventListener('offline', () => {
+        console.log('📱 App is offline');
+        // Çevrimdışı durumu UI'da göster
+      });
+    </script>
+  </body>
+</html>
